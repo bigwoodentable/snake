@@ -6,48 +6,102 @@ interface Coordinates {
   y: number;
 }
 
+interface direction {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 export default class Snake extends Canvas {
   private food: Food;
   private x: number;
   private y: number;
   private xNext: number;
   private yNext: number;
-  private total: number;
   private body: Required<Coordinates>[];
+  protected total: number;
+  protected score: HTMLInputElement;
+  private isPaused: boolean;
+  private direction: direction;
 
   constructor(food: Food, x: number = 0, y: number = 0) {
     super();
     this.food = food;
     this.x = x;
     this.y = y;
-    this.xNext = this.unitSize * this.speedFactor;
+    this.xNext = this.unitSize;
     this.yNext = 0;
-    this.total = 0;
     this.body = [];
     this.move();
     this.turn();
     this.hasEaten();
     this.food.createFood();
+    this.total = 0;
+    this.score = document.querySelector('.score') as HTMLInputElement;
+    this.isPaused = false;
+    this.food.foodLocation();
+    this.direction = {
+      up: false,
+      down: false,
+      left: false,
+      right: true
+    };
   }
 
   turn(): void {
     window.addEventListener('keydown', (e): void | null => {
       switch (e.key) {
         case 'ArrowUp':
-          this.xNext = 0;
-          this.yNext = -this.unitSize * this.speedFactor;
+          if (!this.direction.down) {
+            this.xNext = 0;
+            this.yNext = -this.unitSize;
+            this.direction = {
+              up: true,
+              down: false,
+              left: false,
+              right: false
+            };
+          }
           break;
         case 'ArrowDown':
-          this.xNext = 0;
-          this.yNext = this.unitSize * this.speedFactor;
+          if (!this.direction.up) {
+            this.xNext = 0;
+            this.yNext = this.unitSize;
+            this.direction = {
+              up: false,
+              down: true,
+              left: false,
+              right: false
+            };
+          }
           break;
         case 'ArrowRight':
-          this.xNext = this.unitSize * this.speedFactor;
-          this.yNext = 0;
+          if (!this.direction.left) {
+            this.xNext = this.unitSize;
+            this.yNext = 0;
+            this.direction = {
+              up: false,
+              down: false,
+              left: false,
+              right: true
+            };
+          }
           break;
         case 'ArrowLeft':
-          this.xNext = -this.unitSize * this.speedFactor;
-          this.yNext = 0;
+          if (!this.direction.right) {
+            this.xNext = -this.unitSize;
+            this.yNext = 0;
+            this.direction = {
+              up: false,
+              down: false,
+              left: true,
+              right: false
+            };
+          }
+          break;
+        case ' ':
+          this.pause();
           break;
         default:
           break;
@@ -56,16 +110,17 @@ export default class Snake extends Canvas {
   }
 
   move(): void {
-    this.food.foodLocation();
-
     // every 250 interval the code runs
     //this.interval is used for clearInterval(this.interval) to stop
     this.interval = window.setInterval(() => {
       // this.ctx.clearRect(this.x, this.y, this.unitSize, this.unitSize);
       //creates the illusion of movement by clearing the rect at each interval and re-drawing the snake in the next position
+
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
       //at each 'frame' the food is drawn again, because this.foodlocation() is set outside of this interval, the location is the same
       this.food.createFood();
+
       // check if it's dead
       this.die();
       // check if it ate food
@@ -73,7 +128,7 @@ export default class Snake extends Canvas {
       this.update();
       //the this.update() function updates this.x and this.y which intotal makes the snake's position move
       this.drawElement(this.x, this.y, undefined, this.body);
-    }, 250 / this.speedFactor);
+    }, 80);
   }
 
   //imp
@@ -118,12 +173,30 @@ export default class Snake extends Canvas {
       this.total += 1;
       this.food.foodLocation();
       this.food.createFood();
+      this.score.innerText = `SCORE: ${this.total}`;
     }
   }
 
   //Considered dead if it hits itself
   die() {
-    if (this.body.find((coord) => coord.x === this.x && coord.y === this.y))
-      console.log('DEAD');
+    if (
+      this.body.find((coord) => {
+        return coord.x === this.x && coord.y === this.y;
+      })
+    ) {
+      alert('You died');
+      this.total = 0;
+      this.body = [];
+    }
+  }
+
+  pause() {
+    if (!this.isPaused) {
+      clearInterval(this.interval);
+      this.isPaused = true;
+    } else {
+      this.move();
+      this.isPaused = false;
+    }
   }
 }

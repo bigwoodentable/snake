@@ -2,14 +2,12 @@ export default class Canvas {
   protected canvas: HTMLCanvasElement;
   protected ctx: any;
   protected unitSize: number;
-  protected speedFactor: number;
   protected interval: number;
 
   constructor() {
     this.canvas = document.querySelector('.arena') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d');
     this.unitSize = 10;
-    this.speedFactor = 1;
     this.interval = 0;
   }
 
